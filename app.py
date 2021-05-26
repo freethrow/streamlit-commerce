@@ -51,7 +51,7 @@ if flux=='Esportazioni':
 elif flux=='Importazioni':
     flux_var = 'Var. Import'
 elif flux == 'Interscambio':
-    flux_var ='Var. Interscambio'
+    flux_var = None
 
 top_n = st.sidebar.selectbox("Selezionare il numero di voci principali",(20,10,5))
 
@@ -106,8 +106,10 @@ if data_file:
     st.write("Tutte le voci")
     st.write(totals)
 
-    filtered = data[['Voce',flux,flux_var]].sort_values(by=flux, ascending=False).head(top_n+1)
-
+    if flux_var:
+        filtered = data[['Voce',flux,flux_var]].sort_values(by=flux, ascending=False).head(top_n+1)
+    else:
+        filtered = data[['Voce',flux]].sort_values(by=flux, ascending=False).head(top_n+1)
     # grab the total
     total_flux = filtered.loc[0]
 
