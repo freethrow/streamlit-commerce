@@ -1,8 +1,12 @@
+
 import streamlit as st
 import pandas as pd
+import os
 
 import matplotlib
 import matplotlib.pyplot as plt
+
+import plotly.express as px
 
 plt.style.use('ggplot')
 
@@ -20,11 +24,11 @@ def translate(name):
 # convert variation
 
 def growth(num):
-    if (num>100):
-        pref = '+'
-    else:
-        pref=''
-    return pref+str(round(num-100,1))+'%'
+    # if (num>100):
+    #     pref = '+'
+    # else:
+    #     pref=''
+    return round(num-100,1)
 
 # function to process the excel file into a dataframe
 def process(data):
@@ -61,12 +65,23 @@ def process(data):
 def italy_detail():
     
     # the excel file, initially set to none
-    data_file = None
+    #data_file = None
     
         
     # the dataframe initially set to None
-    df_data = None
+    # df_data = None
         
+    
+
+    
+    # add controls
+    data_file = st.sidebar.file_uploader(
+        "Inserire il documento Excel",
+        type=['xls'],
+        help="Soltanto il documento dell'Ente statistico serbo")
+    
+
+
     
     if (data_file==None):
         st.markdown("""
@@ -74,10 +89,11 @@ def italy_detail():
             
             E' necessario selezionare l'apposito documento in formato excel per avviare il processo.
                     """)
-    
-    # add controls
-    data_file = st.sidebar.file_uploader("Inserire il documento Excel",type=['xls'], help="Soltanto il documento dell'Ente statistico serbo")
-    
+    else:
+        with open(os.path.join("tempDir","italiaDettaglio.xls"),"wb") as f: 
+            f.write(data_file.getbuffer())         
+            st.success("Saved File")
+            
     flux = st.sidebar.selectbox("Selezionare il tipo di flusso",('Esportazioni','Importazioni','Interscambio'),
                                 help="esportazioni si riferisce ad esportazioni SERBE in Italia e viceversa")
     
@@ -98,11 +114,12 @@ def italy_detail():
     
     
     # process excel file
-    if data_file:
+    if os.path.join("tempDir","italiaDettaglio.xls"):
+        filePath=os.path.join("tempDir","italiaDettaglio.xls")
 
         try:
             # get the header
-            header = pd.read_excel(data_file, index_col=None, usecols = "A", header = 1, nrows=0)
+            header = pd.read_excel(filePath, index_col=None, usecols = "A", header = 1, nrows=0)
             
             full_header= header.columns.values[0]
             period = full_header.split('PERIOD')[1].split('-Zemlja')[0]
@@ -112,7 +129,7 @@ def italy_detail():
             st.subheader("Documento Excel non valido!")
             
         # read the actual data
-        data=pd.read_excel(data_file, 
+        data=pd.read_excel(filePath, 
             # sheet_name='Tabela - 2021-04-28T082613.292', 
             skiprows=2,
             usecols="B:F")
@@ -126,9 +143,16 @@ def italy_detail():
         # expander to show the entire dataframe
         with st.beta_expander("Dati completi"):
             st.subheader("Dati di commercio completi")
-            st.dataframe(df_data)
+            df_data_reindex = df_data.set_index('Voce', inplace=False)
+            st.dataframe(df_data_reindex)
             
+        
+        if st.button('Export excel'):
+            st.write('Excell scritto')
+            df_data.to_excel("Komplet.xlsx")
+  
             
+   
         # filter the data according to the control
         
         if flux_var:
@@ -151,10 +175,7 @@ def italy_detail():
         # debug
         # st.write(top_no_total)
         
-        plt_fig, ax = plt.subplots()
-        top_no_total = top_no_total.iloc[::-1]
-        ax.barh(top_no_total['Voce'],top_no_total[flux])
-        
+
         
         # fix titles
         if flux=='Esportazioni':
@@ -165,12 +186,14 @@ def italy_detail():
             chart_title = 'Interscambio serbo con Italia nel periodo '+period
         
         
-        ax.set_title(chart_title)
+
         
+        # horizontal chart
+        st.dataframe(top_no_total)
+        hor_fig = px.bar(top_no_total.iloc[::-1], x=flux, y="Voce", orientation='h', color=flux_var,
+                         color_continuous_scale=px.colors.sequential.matter)
         
-        with st.beta_expander("Grafico dei top "+str(top_n)):
-            st.pyplot(plt_fig)
-        
+        st.plotly_chart(hor_fig)
         
         # pie chart data of the top N commodity groups
         rest_sum = float(total_flux[flux])-filtered[1:][flux].sum()
@@ -186,27 +209,29 @@ def italy_detail():
         
         
         # the ACTUAL chart
-        pie_fig, ax = plt.subplots()
-        ax.set_title("Le principali voci: "+flux)
+        # pie_fig, ax = plt.subplots()
+        # ax.set_title("Le principali voci: "+flux)
        
-        ax.pie(pie_df[flux],labels=pie_df['Voce'],autopct='%1.2f%%')
-        with st.beta_expander("Pie chart - %"):
+        # ax.pie(pie_df[flux],labels=pie_df['Voce'],autopct='%1.2f%%')
+        # with st.beta_expander("Pie chart - %"):
 
-            st.pyplot(pie_fig)
+        #     st.pyplot(pie_fig)
     
             
+        # plotly pie chart
+        with st.beta_expander("Quote delle principali voci - %"):
+            plotlyPie = px.pie(
+                pie_df,
+                values=flux,
+                names='Voce',
+                color_discrete_sequence=px.colors.sequential.matter,
+                hover_name="Voce"
+                )
+            plotlyPie.update_layout(dict(
+                title="{} della Serbia, periodo {}".format(flux, period)
+            ))
             
-        # from matplotlib.backends.backend_pdf import PdfPages
+            st.subheader("Quote delle principali voci")
+            st.plotly_chart(plotlyPie)
         
-
-        # #https://stackoverflow.com/questions/32137396/how-do-i-plot-only-a-table-in-matplotlib
-        # fig, ax =plt.subplots(figsize=(12,4))
-        # ax.axis('tight')
-        # ax.axis('off')
-        # the_table = ax.table(cellText=filtered.values,colLabels=filtered.columns,loc='center')
-
-        # #https://stackoverflow.com/questions/4042192/reduce-left-and-right-margins-in-matplotlib-plot
-        # pp = PdfPages("table.pdf")
-        # pp.savefig(fig, bbox_inches='tight')
-        # pp.savefig(plt_fig, bbox_inches='tight')
-        # pp.close()
+        

@@ -63,6 +63,7 @@ words = {
     'Fotoaparati,optič. proizv.,časovnici, satovi':'Atrezzature fotografiche, prodotti ottici, orologi',
     'Razni gotovi proizvodi, nigde nepomenuti':'Vari prodotti finali',
     'Zlato(osim ruda i koncentrata zlata)':'Oro',
+    'Metalni novac, koji nije sredstvo plaćanja':'Monete di metallo, non denaro',
     'UKUPNO':'TOTALE'
 
 

@@ -4,6 +4,8 @@ st.set_page_config(layout="wide")
 #import mini apps
 from italy_detail import italy_detail
 
+from world_trade import world_trade
+
 def main():
 
     st.image('logo.png', width=160)
@@ -22,7 +24,8 @@ def main():
         #st.subheader("Serbia - Italia") - debug
         italy_detail()
     elif choice == "Serbia-Mondo":
-        st.subheader("Serbia-Mondo")
+        #st.subheader("Serbia-Mondo")
+        world_trade()
     elif choice == "Economia":
       st.subheader("Economia")
       

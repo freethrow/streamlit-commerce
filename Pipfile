@@ -12,6 +12,8 @@ plotly = "==4.14.3"
 plotly-express = "==0.4.0"
 matplotlib = "*"
 seaborn = "*"
+openpyxl = "*"
+python-docx = "*"
 
 [dev-packages]
 autopep8 = "*"
