@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
 
+import os
+
 import matplotlib
 import matplotlib.pyplot as plt
 
@@ -83,7 +85,11 @@ def world_trade():
             
             E' necessario selezionare l'apposito documento in formato excel per avviare il processo.
                     """)
-    
+    else:
+        with open(os.path.join("tempDir","italiaMondo.xls"),"wb") as f: 
+            f.write(w_data_file.getbuffer())         
+            st.success("Saved File")
+            
     
     w_flux = st.sidebar.selectbox("Selezionare il tipo di flusso",
                                   ('Esportazioni','Importazioni','Interscambio'),
